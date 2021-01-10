@@ -1,5 +1,6 @@
 const express = require('express');
 const userRoute = express.Router();
+const createError = require('http-errors');
 
 // user model
 let UserModel = require('../models/User');
@@ -17,7 +18,14 @@ userRoute.route('/').get((req, res) => {
  userRoute.route('/create-user').post((req, res, next) => {
     UserModel.create(req.body, (error, data) => {
     if (error) {
-      return next(error)
+      let errorMsg = {errorMessage:""};
+      if(error.code && error.code==11000){
+        errorMsg.errorMessage = "Un compte existe dejà avec cette adresse email , veuillez saisir une autre adresse mail valide : ";
+
+      }else{
+        errorMsg.errorMessage = error;
+      }
+      res.json(errorMsg)
     } else {
       res.json(data)
     }
@@ -32,6 +40,17 @@ userRoute.route('/edit-user/:id').get((req, res) => {
       res.json(data)
     }
   }) 
+})
+
+userRoute.route('/login').post((req, res) => {
+  UserModel.findOne({'email': req.body.email, 'password': req.body.password}, function(err, data){
+    if (err) {
+      console.log("err")
+      return next(err)
+    } else {
+      res.json(data)
+    }
+});
 })
 
 // Update user
